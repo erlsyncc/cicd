@@ -11,7 +11,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/chiyoleii/cicd.git',
+                    url: 'https://github.com/erlsyncc/cicd.git',
                     credentialsId: 'github-pat'
         	}
     	}
