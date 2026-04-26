@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CI/CD Demo</title>
+    <title>CI/CD Demos</title>
 </head>
 <body style="background-color:green">
     <h1 id="title">Hello CI/CD rtials</h1>
