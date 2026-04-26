@@ -1,66 +1,57 @@
 pipeline {
-    agent any
-
+	agent any
+ 
     environment {
-        GIT_REPO_URL = 'repositorylink'
-        GIT_CREDENTIALS_ID = 'github-pat'
-        GIT_BRANCH = 'main'
-    }
-
-    stages {
-
-        stage('Checkout SCM') {
+        JAVA_HOME = "/opt/java17"
+        DEPLOY = "/var/www/html"
+	}
+ 
+	stages {
+ 
+        stage('Checkout') {
             steps {
-                checkout scm: [
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${env.GIT_BRANCH}"]],
-                    userRemoteConfigs: [[
-                        url: "${env.GIT_REPO_URL}",
-                        credentialsId: "${env.GIT_CREDENTIALS_ID}"
-                    ]]
-                ]
-            }
-        }
-
-        stage('Setup Python Environment') {
+                git branch: 'main',
+                    url: 'https://github.com/chiyoleii/cicd.git',
+                    credentialsId: 'github-pat'
+        	}
+    	}
+ 
+    	stage('Setup Python') {
             steps {
                 sh '''
                 python3 -m venv venv
                 . venv/bin/activate
-                pip install --upgrade pip
                 pip install -r requirements.txt
                 '''
-            }
-        }
-
-        stage('Run Selenium Test') {
+        	}
+    	}
+ 
+        stage('Start Apache') {
+            steps {
+                sh 'sudo systemctl start apache2'
+        	}
+    	}
+ 
+        stage('Test') {
             steps {
                 sh '''
                 . venv/bin/activate
+                Xvfb :99 -screen 0 1024x768x16 &
+                export DISPLAY=:99
+                sleep 3
                 python test.py
                 '''
-            }
-        }
-
-        stage('Deploy to Apache') {
+        	}
+    	}
+ 
+        stage('Deploy') {
             steps {
                 sh '''
-                sudo rsync -av -o --delete ./ /var/www/html/
-                sudo chown -R www-data:www-data /var/www/html/
+                rsync -av --delete ./ ${DEPLOY}/
+                sudo chown -R www-data:www-data ${DEPLOY}
+                sudo chmod -R 755 ${DEPLOY}
                 '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "CI/CD SUCCESS ✔"
-        }
-        failure {
-            echo "CI/CD FAILED ❌"
-        }
-        always {
-            cleanWs()
-        }
-    }
+        	}
+    	}
+	}
 }
